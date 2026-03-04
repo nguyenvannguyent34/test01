@@ -1,1087 +1,1145 @@
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hệ thống thi trắc nghiệm trực tuyến</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Kiểm tra trực tuyến nghiệp vụ Cán bộ kiểm tra PCCC</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
+
   <style>
     :root{
-      --primary:#a11919;
-      --primary-dark:#7d1010;
-      --bg:#f4f6fb;
-      --card:#ffffff;
-      --text:#1d2433;
-      --muted:#667085;
-      --border:#dde3ee;
-      --success:#137333;
-      --warning:#b26a00;
-      --danger:#c62828;
-      --shadow:0 10px 30px rgba(16,24,40,.08);
-      --radius:18px;
+      --primary:#8b0000;
+      --primary2:#b22222;
+      --primary3:#6f0000;
+      --gold:#ffd700;
+      --card:rgba(255,255,255,0.94);
+      --muted:#5f6875;
+      --ok:#0f7b0f;
+      --bad:#b00020;
+      --shadow:0 12px 30px rgba(0,0,0,0.35);
+      --border:1px solid rgba(0,0,0,0.10);
     }
+
     *{box-sizing:border-box}
+
+    html, body{
+      margin:0;
+      padding:0;
+      min-height:100%;
+    }
+
     body{
-      margin:0;
       font-family:"Times New Roman", Times, serif;
-      color:var(--text);
-      background:
-        radial-gradient(circle at top right, rgba(161,25,25,.10), transparent 28%),
-        linear-gradient(180deg, #f9fafc 0%, #eef2f8 100%);
+      color:#111;
       min-height:100vh;
+      position:relative;
+      background:#111;
+      display:flex;
+      flex-direction:column;
     }
-    .topbar{
-      background:linear-gradient(90deg, var(--primary-dark), var(--primary));
-      color:#fff;
-      padding:18px 24px;
-      box-shadow:0 6px 20px rgba(125,16,16,.2);
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      background:
+        linear-gradient(to bottom, rgba(139,0,0,0.22), rgba(0,0,0,0.60)),
+        url("pccc-bg.png") center/cover no-repeat;
+      filter:blur(7px) brightness(0.62);
+      transform:scale(1.04);
+      z-index:-2;
     }
-    .topbar h1{
-      margin:0;
-      font-size:28px;
-      letter-spacing:.3px;
+
+    body::after{
+      content:"";
+      position:fixed;
+      inset:0;
+      background:radial-gradient(circle at 50% 10%, rgba(255,255,255,0.10), transparent 38%);
+      z-index:-1;
+      pointer-events:none;
     }
-    .topbar .sub{
-      margin-top:6px;
-      opacity:.9;
-      font-size:15px;
+
+    .top-unit{
+      text-align:center;
+      color:var(--gold);
+      padding:18px 12px 8px;
+      text-shadow:0 2px 6px rgba(0,0,0,0.45);
+      line-height:1.35;
     }
-    .container{
-      max-width:1180px;
-      margin:28px auto;
-      padding:0 16px 40px;
+
+    .unit-line{
+      display:inline-block;
+      padding:0 20px 3px;
+      margin:0 auto 6px;
     }
-    .grid{
-      display:grid;
-      grid-template-columns: 320px 1fr;
-      gap:18px;
+
+    .unit-line-short{
+      display:inline-block;
+      padding:0 12px 3px;
+      border-bottom:2px solid rgba(255,215,0,0.95);
+      margin:0 auto 6px;
     }
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      overflow:hidden;
-    }
-    .card-header{
-      padding:16px 20px;
-      border-bottom:1px solid var(--border);
-      background:#fff;
-    }
-    .card-header h2,.card-header h3{
-      margin:0 0 6px 0;
-      font-size:22px;
-    }
-    .card-body{
-      padding:18px 20px 20px;
-    }
-    .muted{color:var(--muted)}
-    .small{font-size:14px}
-    .tiny{font-size:13px}
-    .status{
-      padding:12px 14px;
-      border-radius:12px;
-      margin-bottom:12px;
-      font-size:15px;
-      border:1px solid transparent;
-    }
-    .status.info{background:#eef4ff;border-color:#d6e5ff;color:#194185}
-    .status.success{background:#ecfdf3;border-color:#ccebd8;color:#0f6d33}
-    .status.warning{background:#fff8e8;border-color:#f5e2a8;color:#8b5a00}
-    .status.error{background:#fff1f1;border-color:#f0c7c7;color:#a12626}
-    .role-list{
-      display:grid;
-      gap:14px;
-    }
-    .role-btn{
-      width:100%;
-      padding:16px;
-      border:none;
-      border-radius:16px;
-      background:#fff;
-      border:1px solid var(--border);
-      font-size:18px;
-      cursor:pointer;
-      transition:.18s ease;
-      text-align:left;
-    }
-    .role-btn:hover{
-      transform:translateY(-1px);
-      border-color:#d0b1b1;
-      box-shadow:0 12px 20px rgba(16,24,40,.07);
-    }
-    .role-btn strong{
-      display:block;
-      margin-bottom:4px;
-      color:var(--primary-dark);
-      font-size:20px;
-    }
-    label{
-      display:block;
+
+    .top-unit .line1{
+      font-size:21px;
       font-weight:700;
-      margin:10px 0 6px;
+      text-transform:uppercase;
+      letter-spacing:0.3px;
     }
-    input, select{
-      width:100%;
-      padding:12px 14px;
-      border:1px solid #cfd6e1;
-      border-radius:12px;
-      font-size:16px;
-      font-family:inherit;
-      background:#fff;
+
+    .top-unit .line2{
+      font-size:20px;
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:0.3px;
     }
-    button{
-      border:none;
-      background:var(--primary);
+
+    .topbar{
+      width:min(1100px, calc(100% - 24px));
+      margin:34px auto 14px;
+      background:rgba(139,0,0,0.92);
       color:#fff;
-      padding:11px 16px;
-      font-size:16px;
+      padding:16px 20px;
+      display:flex;
+      align-items:center;
+      gap:14px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,0.14);
+      box-shadow:var(--shadow);
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      flex:1;
+      min-width:0;
+    }
+
+    .logo{
+      width:62px;
+      height:62px;
       border-radius:12px;
-      cursor:pointer;
-      font-family:inherit;
-      transition:.18s ease;
+      background:rgba(255,255,255,0.14);
+      border:1px solid rgba(255,255,255,0.18);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      flex-shrink:0;
     }
-    button:hover{background:var(--primary-dark)}
-    button.secondary{
-      background:#fff;
-      color:var(--text);
-      border:1px solid #ccd4e0;
+
+    .logo img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      background:transparent;
     }
-    button.secondary:hover{background:#f7f8fa}
-    button.success{background:var(--success)}
-    button.warning{background:var(--warning)}
-    button.danger{background:var(--danger)}
-    .hidden{display:none !important}
-    .flex{
+
+    .logo-fallback{
+      display:none;
+      font-size:12px;
+      text-align:center;
+      line-height:1.2;
+      padding:6px;
+    }
+
+    .brand h1{
+      margin:0;
+      font-size:25px;
+      line-height:1.22;
+      font-weight:700;
+    }
+
+    .brand .sub{
+      margin-top:5px;
+      font-size:16px;
+      opacity:0.96;
+      line-height:1.3;
+    }
+
+    .actions{
       display:flex;
       gap:10px;
       align-items:center;
       flex-wrap:wrap;
+      justify-content:flex-end;
     }
-    .exam-header{
+
+    .pill{
+      padding:8px 12px;
+      background:rgba(255,255,255,0.12);
+      border:1px solid rgba(255,255,255,0.20);
+      border-radius:999px;
+      font-size:14px;
+      white-space:nowrap;
+    }
+
+    .page{
+      width:min(980px, calc(100% - 24px));
+      margin:0 auto 24px;
+      flex:1;
+    }
+
+    .card{
+      background:var(--card);
+      border-radius:18px;
+      box-shadow:var(--shadow);
+      padding:20px;
+      border:var(--border);
+    }
+
+    .row{
       display:flex;
-      justify-content:space-between;
       gap:16px;
       flex-wrap:wrap;
-      align-items:center;
-      margin-bottom:14px;
     }
-    .pill{
-      padding:9px 12px;
-      border-radius:999px;
-      background:#f6f8fc;
-      border:1px solid #e1e7f0;
-      font-size:15px;
+
+    .col{
+      flex:1;
+      min-width:280px;
     }
-    .timer{
-      font-weight:700;
-      font-size:20px;
-      color:var(--danger);
-    }
-    .progress-wrap{
-      width:100%;
-      background:#edf1f8;
-      border-radius:999px;
-      height:12px;
-      overflow:hidden;
-      margin:12px 0 6px;
-    }
-    .progress-bar{
-      height:100%;
-      width:0%;
-      background:linear-gradient(90deg, var(--primary-dark), var(--primary));
-      transition:width .2s linear;
-    }
-    .question-box{
-      border:1px solid #e4e9f1;
-      border-radius:16px;
-      padding:18px;
-      background:#fbfcfe;
-      margin-top:14px;
-    }
-    .question-title{
-      font-size:24px;
-      line-height:1.4;
-      margin:0 0 16px;
-    }
-    .options{
-      display:grid;
-      gap:12px;
-    }
-    .option{
-      border:1px solid #d8dfeb;
-      border-radius:14px;
-      padding:14px 16px;
+
+    .muted{color:var(--muted)}
+
+    .btn{
+      padding:11px 16px;
+      border:none;
+      border-radius:12px;
       cursor:pointer;
+      background:var(--primary2);
+      color:#fff;
+      font-size:16px;
+      font-family:"Times New Roman", Times, serif;
+      transition:filter .15s ease, transform .05s ease;
+    }
+
+    .btn:hover{filter:brightness(0.96)}
+    .btn:active{transform:scale(0.99)}
+
+    .btn.secondary{
       background:#fff;
-      transition:.15s ease;
-      user-select:none;
+      color:#111;
+      border:1px solid rgba(0,0,0,0.15);
     }
-    .option:hover{
-      transform:translateY(-1px);
-      border-color:#c7b0b0;
-      box-shadow:0 8px 16px rgba(16,24,40,.05);
+
+    .btn.ghost{
+      background:transparent;
+      color:#111;
+      border:1px dashed rgba(0,0,0,0.25);
     }
-    .option.selected{
-      border:2px solid var(--primary);
-      background:#fff7f7;
+
+    .btn:disabled{
+      opacity:0.55;
+      cursor:not-allowed;
+      transform:none;
     }
-    .option .letter{
-      display:inline-flex;
-      width:30px;
-      height:30px;
-      border-radius:999px;
-      align-items:center;
-      justify-content:center;
-      background:#eef2f8;
+
+    input, select{
+      width:100%;
+      padding:11px 12px;
+      border-radius:12px;
+      border:1px solid rgba(0,0,0,0.18);
+      font-family:"Times New Roman", Times, serif;
+      font-size:16px;
+      background:#fff;
+    }
+
+    label{
+      display:block;
+      margin:10px 0 6px;
       font-weight:700;
-      margin-right:10px;
-      flex:0 0 auto;
     }
-    .option-line{
-      display:flex;
-      align-items:flex-start;
-      gap:8px;
-      font-size:19px;
+
+    .hr{
+      height:1px;
+      background:rgba(0,0,0,0.10);
+      margin:14px 0;
+    }
+
+    .status{
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(0,0,0,0.12);
+      background:rgba(255,255,255,0.68);
+      font-size:15px;
       line-height:1.4;
     }
-    .nav-actions{
+
+    .status.ok{
+      border-color:rgba(15,123,15,0.25);
+      background:rgba(15,123,15,0.08);
+    }
+
+    .status.bad{
+      border-color:rgba(176,0,32,0.25);
+      background:rgba(176,0,32,0.08);
+    }
+
+    .hide{display:none !important}
+
+    .quiz-head{
       display:flex;
       justify-content:space-between;
-      gap:12px;
-      margin-top:18px;
+      gap:10px;
+      align-items:flex-start;
       flex-wrap:wrap;
     }
-    .summary-grid{
+
+    .timer{
+      font-size:20px;
+      font-weight:700;
+      padding:9px 14px;
+      border-radius:12px;
+      background:#fff;
+      border:1px solid rgba(0,0,0,0.15);
+      min-width:180px;
+      text-align:center;
+    }
+
+    .qno{
+      font-weight:800;
+      font-size:19px;
+      margin:0 0 8px;
+      color:var(--primary3);
+    }
+
+    .qtext{
+      font-size:20px;
+      margin:0 0 10px;
+      line-height:1.4;
+    }
+
+    .options{
       display:grid;
-      grid-template-columns:repeat(4,minmax(0,1fr));
-      gap:12px;
-      margin:14px 0 18px;
+      gap:10px;
     }
-    .summary-box{
-      border:1px solid #e4e9f1;
-      border-radius:16px;
-      padding:16px;
-      background:#fcfdff;
+
+    .opt{
+      padding:13px 14px;
+      border-radius:14px;
+      border:1px solid rgba(0,0,0,0.15);
+      background:#fff;
+      cursor:pointer;
+      transition:transform .05s ease, filter .12s ease, border-color .12s ease;
+      line-height:1.45;
+      font-size:17px;
     }
-    .summary-box .label{font-size:14px;color:var(--muted)}
-    .summary-box .value{font-size:28px;font-weight:700;margin-top:6px}
+
+    .opt:hover{filter:brightness(0.985)}
+    .opt:active{transform:scale(0.995)}
+
+    .opt.selected{
+      outline:3px solid rgba(178,34,34,0.20);
+      border-color:rgba(178,34,34,0.45);
+      background:rgba(178,34,34,0.05);
+    }
+
+    .nav{
+      display:flex;
+      gap:10px;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      margin-top:14px;
+    }
+
+    .nav .left, .nav .right{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .progress{
+      margin-top:10px;
+      font-size:15px;
+      color:var(--muted);
+    }
+
     table{
       width:100%;
       border-collapse:collapse;
-      margin-top:12px;
-      background:#fff;
-    }
-    th, td{
-      border-bottom:1px solid #e6ebf3;
-      padding:10px 8px;
-      text-align:left;
       font-size:15px;
+      background:#fff;
+      border-radius:14px;
+      overflow:hidden;
+      border:1px solid rgba(0,0,0,0.12);
+    }
+
+    th, td{
+      padding:10px;
+      border-bottom:1px solid rgba(0,0,0,0.10);
+      text-align:left;
       vertical-align:top;
     }
+
     th{
-      background:#f8fafc;
-      position:sticky;
-      top:0;
-      z-index:1;
+      background:rgba(139,0,0,0.08);
     }
-    .table-wrap{
-      border:1px solid #e1e7f0;
-      border-radius:16px;
-      overflow:auto;
-      max-height:520px;
+
+    tr:last-child td{
+      border-bottom:none;
     }
-    .note-box{
-      padding:14px;
-      border-radius:14px;
-      background:#fff8e8;
-      border:1px solid #f2dba4;
-      color:#7a5100;
-      margin-top:14px;
-    }
-    .footer-note{
-      margin-top:12px;
+
+    .small{
       font-size:13px;
-      color:#667085;
     }
-    @media (max-width: 980px){
-      .grid{grid-template-columns:1fr}
-      .summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+
+    .footer{
+      text-align:center;
+      color:#fff;
+      font-size:16px;
+      padding:8px 12px 20px;
+      text-shadow:0 2px 6px rgba(0,0,0,0.35);
+      font-style:italic;
     }
-    @media (max-width: 640px){
-      .question-title{font-size:21px}
-      .summary-grid{grid-template-columns:1fr}
-      .topbar h1{font-size:22px}
+
+    @media (max-width: 768px){
+      .top-unit .line1, .top-unit .line2{
+        font-size:17px;
+      }
+      .topbar{
+        flex-direction:column;
+        align-items:stretch;
+        margin-top:28px;
+      }
+      .actions{
+        justify-content:flex-start;
+      }
+      .brand h1{
+        font-size:21px;
+      }
+      .qtext{
+        font-size:18px;
+      }
+      .logo{
+        width:54px;
+        height:54px;
+      }
     }
   </style>
 </head>
+
 <body>
-  <div class="topbar">
-    <h1>HỆ THỐNG THI TRẮC NGHIỆM TRỰC TUYẾN</h1>
-    <div class="sub">Load câu hỏi trực tiếp từ file Excel cùng thư mục • Mỗi thí sinh làm 20 câu trong 20 phút • Admin xem kết quả tổng hợp</div>
+  <div class="top-unit">
+    <div class="line1"><span class="unit-line">Công an tỉnh Quảng Ninh</span></div>
+    <div class="line2"><span class="unit-line">Phòng Cảnh sát PCCC và CNCH</span></div>
   </div>
 
-  <div class="container">
-    <div class="grid">
-      <div class="card">
-        <div class="card-header">
-          <h2>Điều khiển</h2>
-          <div class="muted small">Thí sinh chỉ cần mở link là có thể bắt đầu thi.</div>
-        </div>
-        <div class="card-body">
-          <div id="loadStatus" class="status info">Đang tải gói câu hỏi từ <b>questions.xlsx</b>...</div>
-
-          <div class="role-list" id="roleList">
-            <button class="role-btn" id="btnCandidateMode">
-              <strong>Thí sinh</strong>
-              <span class="muted">Nhập họ tên, đơn vị và bắt đầu làm bài thi.</span>
-            </button>
-
-            <button class="role-btn" id="btnAdminMode">
-              <strong>Admin</strong>
-              <span class="muted">Xem danh sách kết quả tổng hợp của tất cả thí sinh.</span>
-            </button>
-          </div>
-
-          <div id="candidateForm" class="hidden">
-            <label for="fullName">Họ và tên</label>
-            <input id="fullName" type="text" placeholder="Nhập họ và tên" />
-
-            <label for="unit">Đơn vị</label>
-            <input id="unit" type="text" placeholder="Nhập đơn vị công tác" />
-
-            <div class="note-box tiny">
-              Gói câu hỏi được lấy từ file <b>questions.xlsx</b> đặt cùng thư mục với file HTML.
-              Mỗi lượt thi chọn ngẫu nhiên <b>20 câu</b> từ ngân hàng đề.
-            </div>
-
-            <div class="flex" style="margin-top:14px">
-              <button id="btnStartExam">Bắt đầu thi</button>
-              <button id="btnBackFromCandidate" class="secondary">Quay lại</button>
-            </div>
-          </div>
-
-          <div id="adminLogin" class="hidden">
-            <label for="adminPassword">Mật khẩu admin</label>
-            <input id="adminPassword" type="password" placeholder="Nhập mật khẩu admin" />
-            <div class="flex" style="margin-top:14px">
-              <button id="btnAdminLogin">Đăng nhập</button>
-              <button id="btnBackFromAdmin" class="secondary">Quay lại</button>
-            </div>
-            <div class="footer-note">Đổi mật khẩu tại biến <b>ADMIN_PASSWORD</b> trong mã nguồn HTML.</div>
-          </div>
-
-          <div class="footer-note">
-            Định dạng Excel chuẩn: các cột <b>ID | Question | A | B | C | D | Correct | Explanation</b>. Cột
-            <b>Correct</b> nhập một trong 4 giá trị: <b>A</b>, <b>B</b>, <b>C</b>, <b>D</b>.
-          </div>
-        </div>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo" title="Logo Cảnh sát PCCC">
+        <img src="logo-pccc.png" alt="Logo Cảnh sát PCCC"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        <div class="logo-fallback">LOGO<br>PCCC</div>
       </div>
 
-      <div class="card">
-        <div class="card-header">
-          <h2 id="mainTitle">Sẵn sàng tổ chức thi</h2>
-          <div class="muted small" id="mainSub">Hệ thống đang chờ lựa chọn chế độ làm việc.</div>
-        </div>
-        <div class="card-body">
-
-          <div id="welcomePanel">
-            <div class="status success">
-              Khi đưa bộ file này lên hosting (ví dụ GitHub Pages), thí sinh chỉ cần mở link là làm bài được.
-            </div>
-            <div class="note-box">
-              Để <b>Admin xem kết quả tổng hợp</b>, cần dán URL của <b>Google Apps Script Web App</b> vào biến
-              <b>SCRIPT_URL</b> trong file HTML. Phần mã Apps Script sẽ được cung cấp riêng.
-            </div>
-          </div>
-
-          <div id="examPanel" class="hidden">
-            <div class="exam-header">
-              <div class="flex">
-                <div class="pill"><b>Thí sinh:</b> <span id="candidateNameView">-</span></div>
-                <div class="pill"><b>Đơn vị:</b> <span id="candidateUnitView">-</span></div>
-              </div>
-              <div class="pill timer">Thời gian còn lại: <span id="timeRemaining">20:00</span></div>
-            </div>
-
-            <div class="small muted">
-              <span id="questionCounter">Câu 1 / 20</span> •
-              <span id="answeredCounter">Đã trả lời: 0 / 20</span>
-            </div>
-            <div class="progress-wrap">
-              <div class="progress-bar" id="progressBar"></div>
-            </div>
-
-            <div class="question-box">
-              <h3 class="question-title" id="questionText">Nội dung câu hỏi</h3>
-              <div class="options" id="optionsBox"></div>
-
-              <div class="nav-actions">
-                <div class="flex">
-                  <button id="btnPrev" class="secondary">← Câu trước</button>
-                  <button id="btnNext" class="secondary">Câu tiếp →</button>
-                </div>
-                <button id="btnSubmitExam" class="success">Nộp bài</button>
-              </div>
-            </div>
-          </div>
-
-          <div id="resultPanel" class="hidden">
-            <div class="status success" id="submitStatus">Đã nộp bài.</div>
-            <div class="summary-grid">
-              <div class="summary-box">
-                <div class="label">Họ và tên</div>
-                <div class="value" id="resultName" style="font-size:22px">-</div>
-              </div>
-              <div class="summary-box">
-                <div class="label">Đơn vị</div>
-                <div class="value" id="resultUnit" style="font-size:22px">-</div>
-              </div>
-              <div class="summary-box">
-                <div class="label">Điểm số</div>
-                <div class="value" id="resultScore">0/20</div>
-              </div>
-              <div class="summary-box">
-                <div class="label">Thời gian đã dùng</div>
-                <div class="value" id="resultTime">00:00</div>
-              </div>
-            </div>
-
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>STT</th>
-                    <th>Câu hỏi</th>
-                    <th>Đáp án chọn</th>
-                    <th>Đáp án đúng</th>
-                    <th>Kết quả</th>
-                  </tr>
-                </thead>
-                <tbody id="resultDetailBody"></tbody>
-              </table>
-            </div>
-
-            <div class="flex" style="margin-top:16px">
-              <button id="btnNewAttempt">Làm bài mới</button>
-              <button id="btnBackHomeFromResult" class="secondary">Về trang đầu</button>
-            </div>
-          </div>
-
-          <div id="adminPanel" class="hidden">
-            <div class="flex" style="justify-content:space-between;margin-bottom:8px">
-              <div>
-                <h3 style="margin:0;font-size:24px">Bảng tổng hợp kết quả</h3>
-                <div class="muted small">Dữ liệu lấy từ Google Sheet thông qua Apps Script.</div>
-              </div>
-              <div class="flex">
-                <button id="btnRefreshResults">Làm mới</button>
-                <button id="btnExportCsv" class="secondary">Xuất CSV</button>
-                <button id="btnLogoutAdmin" class="secondary">Đăng xuất</button>
-              </div>
-            </div>
-
-            <div class="summary-grid">
-              <div class="summary-box">
-                <div class="label">Tổng số bài thi</div>
-                <div class="value" id="statTotal">0</div>
-              </div>
-              <div class="summary-box">
-                <div class="label">Điểm trung bình</div>
-                <div class="value" id="statAverage">0</div>
-              </div>
-              <div class="summary-box">
-                <div class="label">Điểm cao nhất</div>
-                <div class="value" id="statMax">0</div>
-              </div>
-              <div class="summary-box">
-                <div class="label">Điểm thấp nhất</div>
-                <div class="value" id="statMin">0</div>
-              </div>
-            </div>
-
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Thời gian nộp</th>
-                    <th>Họ và tên</th>
-                    <th>Đơn vị</th>
-                    <th>Điểm</th>
-                    <th>Tỷ lệ</th>
-                    <th>Thời gian làm bài</th>
-                  </tr>
-                </thead>
-                <tbody id="adminResultBody"></tbody>
-              </table>
-            </div>
-
-            <div class="footer-note">
-              Mẹo: có thể mở trực tiếp Google Sheet để lọc, thống kê sâu hơn hoặc in biên bản.
-            </div>
-          </div>
-
-        </div>
+      <div style="min-width:0">
+        <h1>Kiểm tra trực tuyến nghiệp vụ Cán bộ kiểm tra PCCC</h1>
+        <div class="sub">Mỗi thí sinh có 20 phút để trả lời 20 câu hỏi trắc nghiệm</div>
       </div>
+    </div>
+
+    <div class="actions">
+      <div class="pill" id="bankInfo">Ngân hàng câu hỏi gồm … câu</div>
+      <div class="pill">Trạng thái: <span id="netState">Sẵn sàng</span></div>
     </div>
   </div>
 
+  <div class="page">
+
+    <div class="card" id="modeCard">
+      <h2 style="margin:0 0 6px">Chọn vai trò</h2>
+      <div class="muted">Thí sinh làm bài thi; Admin xem tổng hợp kết quả.</div>
+
+      <div class="hr"></div>
+
+      <button class="btn" id="btnCandidate">Thí sinh</button>
+      <button class="btn secondary" id="btnAdmin" style="margin-left:10px">Admin</button>
+
+      <div class="hr"></div>
+      <div class="status" id="statusBox">Đang tải ngân hàng câu hỏi…</div>
+    </div>
+
+    <div class="card hide" id="loginCard">
+      <h2 style="margin:0 0 8px">Thông tin thí sinh</h2>
+
+      <div class="row">
+        <div class="col">
+          <label>Họ và tên</label>
+          <input id="fullName" placeholder="Nhập họ và tên" autocomplete="name"/>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <label>Chức vụ</label>
+          <select id="positionName">
+            <option value="">-- Chọn chức vụ --</option>
+            <option>Cán bộ</option>
+            <option>Phó Đội trưởng</option>
+            <option>Đội trưởng</option>
+          </select>
+        </div>
+        <div class="col">
+          <label>Đơn vị</label>
+          <select id="unitName">
+            <option value="">-- Chọn đơn vị --</option>
+            <option>Đội Công tác phòng cháy</option>
+            <option>Đội Chữa cháy và cứu nạn, cứu hộ khu vực 1</option>
+            <option>Đội Chữa cháy và cứu nạn, cứu hộ khu vực 2</option>
+            <option>Đội Chữa cháy và cứu nạn, cứu hộ khu vực 3</option>
+            <option>Đội Chữa cháy và cứu nạn, cứu hộ khu vực 4</option>
+            <option>Đội Chữa cháy và cứu nạn, cứu hộ khu vực 5</option>
+            <option>Đội Chữa cháy và cứu nạn, cứu hộ khu vực 6</option>
+            <option>Đội Chữa cháy và cứu nạn, cứu hộ khu vực 7</option>
+            <option>Đội Chữa cháy và cứu nạn, cứu hộ khu vực 8</option>
+            <option>Đội Chữa cháy và cứu nạn, cứu hộ khu vực 9</option>
+            <option>Đội Chữa cháy và cứu nạn, cứu hộ khu vực 10</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap">
+        <button class="btn" id="btnStart">Bắt đầu làm bài</button>
+        <button class="btn secondary" id="btnBackToMode1">Quay lại</button>
+      </div>
+
+      <div class="status small" style="margin-top:12px">
+        Hệ thống sẽ chọn ngẫu nhiên 20 câu từ ngân hàng câu hỏi.
+      </div>
+    </div>
+
+    <div class="card hide" id="quizCard">
+      <div class="quiz-head">
+        <div>
+          <div class="qno" id="qNo">Câu 1/20</div>
+          <div class="qtext" id="qText">...</div>
+          <div class="progress" id="whoInfo"></div>
+        </div>
+        <div class="timer" id="timerBox">20:00</div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="options" id="optList"></div>
+
+      <div class="nav">
+        <div class="left">
+          <button class="btn secondary" id="btnPrev">← Câu trước</button>
+          <button class="btn secondary" id="btnNext">Câu tiếp →</button>
+        </div>
+        <div class="right">
+          <button class="btn" id="btnSubmit">Nộp bài</button>
+          <button class="btn ghost" id="btnExit">Thoát</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card hide" id="resultCard">
+      <h2 style="margin:0 0 8px">Kết quả</h2>
+      <div class="status ok" id="resultSummary"></div>
+      <div class="hr"></div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap">
+        <button class="btn secondary" id="btnReview">Xem lại</button>
+        <button class="btn" id="btnFinish">Hoàn tất</button>
+      </div>
+
+      <div class="hr"></div>
+      <div class="muted small" id="sendNote"></div>
+    </div>
+
+    <div class="card hide" id="reviewCard">
+      <h2 style="margin:0 0 10px">Xem lại bài làm</h2>
+      <div id="reviewList"></div>
+      <div class="hr"></div>
+      <button class="btn secondary" id="btnBackFromReview">Quay lại kết quả</button>
+    </div>
+
+    <div class="card hide" id="adminCard">
+      <div class="row">
+        <div class="col">
+          <h2 style="margin:0 0 8px">Admin</h2>
+          <label>Mật khẩu</label>
+          <input id="adminPass" type="password" placeholder="Nhập mật khẩu admin"/>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px">
+            <button class="btn" id="btnAdminLogin">Đăng nhập</button>
+            <button class="btn secondary" id="btnBackToMode2">Quay lại</button>
+          </div>
+          <div class="status small" id="adminStatus" style="margin-top:12px">Chưa đăng nhập.</div>
+        </div>
+
+        <div class="col">
+          <h3 style="margin:0 0 8px">Tổng hợp kết quả</h3>
+          <div class="muted small">
+            Nếu bạn bật lưu kết quả qua Google Apps Script, bảng này sẽ tải dữ liệu tổng hợp.
+          </div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px">
+        <button class="btn" id="btnRefreshResults" disabled>Làm mới</button>
+        <button class="btn secondary" id="btnExportCSV" disabled>Xuất CSV</button>
+        <button class="btn ghost" id="btnClearLocal">Xóa dữ liệu cục bộ</button>
+      </div>
+
+      <div id="resultsWrap" class="muted">Chưa có dữ liệu.</div>
+    </div>
+
+  </div>
+
+  <div class="footer">Design by Đội 2</div>
+
 <script>
-(() => {
-  const EXCEL_FILE = "questions.xlsx";
-  const QUESTIONS_PER_EXAM = 20;
-  const EXAM_TIME_MINUTES = 20;
+const QUESTIONS_FILE = "questions.xlsx";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxJ29Mp2uDDurchQAyGLQN7nAg3BApihF9gXHmq2QC-ra92nAToJ328OTYrt4tTSgH7Rg/exec";
+const ADMIN_PASSWORD = "admin123";
+const EXAM_QUESTION_COUNT = 20;
+const EXAM_DURATION_MIN = 20;
 
-  // Dán URL Web App của Google Apps Script tại đây sau khi triển khai:
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxJ29Mp2uDDurchQAyGLQN7nAg3BApihF9gXHmq2QC-ra92nAToJ328OTYrt4tTSgH7Rg/exec";
+let BANK = [];
+let EXAM = [];
+let answers = {};
+let startTs = null;
+let timerId = null;
+let remainingSec = EXAM_DURATION_MIN * 60;
+let curIdx = 0;
+let candidate = { fullName:"", unitName:"", positionName:"" };
+let lastResult = null;
 
-  // Mật khẩu admin đơn giản phía client. Có thể đổi theo nhu cầu.
-  const ADMIN_PASSWORD = "admin123";
+const $ = (id)=>document.getElementById(id);
 
-  const state = {
-    allQuestions: [],
-    examQuestions: [],
-    answers: {},
-    currentIndex: 0,
-    startTime: null,
-    remainingSeconds: EXAM_TIME_MINUTES * 60,
-    timerId: null,
-    candidate: { fullName: "", unit: "" },
-    submitted: false,
-    adminRows: []
+const modeCard = $("modeCard");
+const loginCard = $("loginCard");
+const quizCard = $("quizCard");
+const resultCard = $("resultCard");
+const reviewCard = $("reviewCard");
+const adminCard = $("adminCard");
+
+const statusBox = $("statusBox");
+const bankInfo = $("bankInfo");
+const netState = $("netState");
+
+function show(el){ el.classList.remove("hide"); }
+function hide(el){ el.classList.add("hide"); }
+
+function setStatus(type, msg){
+  statusBox.className = "status " + (type || "");
+  statusBox.textContent = msg;
+}
+
+function setNet(msg){
+  netState.textContent = msg;
+}
+
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+
+function pad2(n){ return String(n).padStart(2,"0"); }
+
+function fmtTime(sec){
+  const m = Math.floor(sec/60);
+  const s = sec%60;
+  return `${pad2(m)}:${pad2(s)}`;
+}
+
+function safeText(x){
+  return (x===undefined || x===null) ? "" : String(x).trim();
+}
+
+function escapeHtml(s){
+  return String(s)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+async function loadQuestions(){
+  try{
+    setNet("Đang tải");
+    setStatus("", "Đang tải ngân hàng câu hỏi…");
+
+    const res = await fetch(QUESTIONS_FILE, { cache:"no-store" });
+    if(!res.ok) throw new Error("Không thể tải file " + QUESTIONS_FILE);
+
+    const ab = await res.arrayBuffer();
+    const wb = XLSX.read(ab, { type:"array" });
+    const wsName = wb.SheetNames[0];
+    const ws = wb.Sheets[wsName];
+    const rows = XLSX.utils.sheet_to_json(ws, { defval:"" });
+
+    const parsed = rows.map((r, idx)=>({
+      id: safeText(r.ID ?? r.Id ?? r.id ?? (idx + 1)),
+      question: safeText(r.Question ?? r.question ?? r.Q ?? r.CauHoi ?? r["Câu hỏi"]),
+      A: safeText(r.A ?? r["Đáp án A"] ?? r["A."]),
+      B: safeText(r.B ?? r["Đáp án B"] ?? r["B."]),
+      C: safeText(r.C ?? r["Đáp án C"] ?? r["C."]),
+      D: safeText(r.D ?? r["Đáp án D"] ?? r["D."]),
+      correct: safeText(r.Correct ?? r.correct ?? r.Answer ?? r["Đáp án đúng"]).toUpperCase(),
+      explanation: safeText(r.Explanation ?? r.explanation ?? r.Note ?? r.GiaiThich ?? r["Giải thích"])
+    })).filter(q =>
+      q.question && q.A && q.B && q.C && q.D && ["A","B","C","D"].includes(q.correct)
+    );
+
+    if(parsed.length < EXAM_QUESTION_COUNT){
+      throw new Error(`Ngân hàng câu hỏi quá ít, cần tối thiểu ${EXAM_QUESTION_COUNT} câu.`);
+    }
+
+    BANK = parsed;
+    bankInfo.textContent = `Ngân hàng câu hỏi gồm ${BANK.length} câu`;
+    setStatus("ok", `Ngân hàng câu hỏi gồm ${BANK.length} câu`);
+    setNet("Sẵn sàng");
+  }catch(err){
+    console.error(err);
+    bankInfo.textContent = "Ngân hàng câu hỏi gồm 0 câu";
+    setNet("Lỗi tải câu hỏi");
+    setStatus("bad", "Không thể tải ngân hàng câu hỏi. Hãy kiểm tra file questions.xlsx và bảo đảm đang chạy qua hosting/web server.");
+  }
+}
+
+function buildExam(){
+  EXAM = shuffle([...BANK]).slice(0, EXAM_QUESTION_COUNT);
+  answers = {};
+  curIdx = 0;
+  startTs = Date.now();
+  remainingSec = EXAM_DURATION_MIN * 60;
+  lastResult = null;
+}
+
+function renderQuestion(){
+  const q = EXAM[curIdx];
+  $("qNo").textContent = `Câu ${curIdx + 1}/${EXAM_QUESTION_COUNT}`;
+  $("qText").textContent = q.question;
+  $("whoInfo").textContent = `${candidate.fullName} • ${candidate.unitName} • ${candidate.positionName}`;
+
+  const optList = $("optList");
+  optList.innerHTML = "";
+
+  const opts = [["A", q.A], ["B", q.B], ["C", q.C], ["D", q.D]];
+
+  for(const [key, text] of opts){
+    const div = document.createElement("div");
+    div.className = "opt" + (answers[curIdx] === key ? " selected" : "");
+    div.innerHTML = `<b>${key}.</b> ${escapeHtml(text)}`;
+    div.onclick = ()=>{
+      answers[curIdx] = key;
+      renderQuestion();
+    };
+    optList.appendChild(div);
+  }
+
+  $("btnPrev").disabled = (curIdx === 0);
+  $("btnNext").disabled = (curIdx === EXAM_QUESTION_COUNT - 1);
+}
+
+function startTimer(){
+  $("timerBox").textContent = fmtTime(remainingSec);
+
+  if(timerId) clearInterval(timerId);
+  timerId = setInterval(()=>{
+    remainingSec--;
+    $("timerBox").textContent = fmtTime(Math.max(0, remainingSec));
+
+    if(remainingSec <= 0){
+      clearInterval(timerId);
+      timerId = null;
+      submitExam(true);
+    }
+  }, 1000);
+}
+
+function calcScore(){
+  let correct = 0;
+
+  const detail = EXAM.map((q, idx)=>{
+    const pick = answers[idx] || "";
+    const ok = pick === q.correct;
+    if(ok) correct++;
+    return {
+      idx: idx + 1,
+      id: q.id,
+      question: q.question,
+      pick,
+      correct: q.correct,
+      ok,
+      explanation: q.explanation,
+      A: q.A,
+      B: q.B,
+      C: q.C,
+      D: q.D
+    };
+  });
+
+  return { correct, total: EXAM_QUESTION_COUNT, detail };
+}
+
+function localKey(){ return "PCCC_EXAM_RESULTS_V3"; }
+
+function loadLocalResults(){
+  try{ return JSON.parse(localStorage.getItem(localKey()) || "[]"); }
+  catch{ return []; }
+}
+
+function saveLocalResult(row){
+  const arr = loadLocalResults();
+  arr.unshift(row);
+  localStorage.setItem(localKey(), JSON.stringify(arr.slice(0, 2000)));
+}
+
+async function postToScript(payload){
+  if(!SCRIPT_URL) return { ok:false, skipped:true };
+
+  try{
+    const res = await fetch(SCRIPT_URL, {
+      method:"POST",
+      headers:{ "Content-Type":"text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+    const txt = await res.text();
+    return { ok:res.ok, status:res.status, text:txt };
+  }catch(err){
+    return { ok:false, error:String(err) };
+  }
+}
+
+async function fetchFromScript(){
+  if(!SCRIPT_URL) throw new Error("SCRIPT_URL trống");
+  const url = SCRIPT_URL + (SCRIPT_URL.includes("?") ? "&" : "?") + "action=list";
+  const res = await fetch(url, { cache:"no-store" });
+  return await res.json();
+}
+
+async function submitExam(auto=false){
+  if(timerId){
+    clearInterval(timerId);
+    timerId = null;
+  }
+
+  $("btnSubmit").disabled = true;
+
+  const now = new Date();
+  const durationSec = Math.round((Date.now() - startTs) / 1000);
+  const score = calcScore();
+  lastResult = score;
+
+  const row = {
+    time: now.toISOString(),
+    fullName: candidate.fullName,
+    unitName: candidate.unitName,
+    positionName: candidate.positionName,
+    total: score.total,
+    correct: score.correct,
+    wrong: score.total - score.correct,
+    percent: Math.round(score.correct / score.total * 100),
+    durationSec,
+    autoSubmit: !!auto,
+    detail: score.detail
   };
 
-  const $ = (id) => document.getElementById(id);
+  saveLocalResult(row);
 
-  const loadStatus = $("loadStatus");
-  const mainTitle = $("mainTitle");
-  const mainSub = $("mainSub");
-
-  function setStatus(type, html) {
-    loadStatus.className = "status " + type;
-    loadStatus.innerHTML = html;
+  $("sendNote").textContent = "";
+  const r = await postToScript(row);
+  if(r.skipped){
+    $("sendNote").textContent = "Kết quả đã được lưu trên thiết bị.";
+  }else if(r.ok){
+    $("sendNote").textContent = "Kết quả đã được ghi nhận vào hệ thống tổng hợp.";
+  }else{
+    $("sendNote").textContent = "Kết quả đã lưu trên thiết bị; chưa gửi được lên hệ thống tổng hợp.";
   }
 
-  function showOnly(sectionId) {
-    ["welcomePanel","examPanel","resultPanel","adminPanel"].forEach(id => $(id).classList.add("hidden"));
-    $(sectionId).classList.remove("hidden");
-  }
+  hide(quizCard);
+  show(resultCard);
 
-  function resetSidePanels() {
-    $("candidateForm").classList.add("hidden");
-    $("adminLogin").classList.add("hidden");
-    $("roleList").classList.remove("hidden");
-  }
+  $("resultSummary").className = "status ok";
+  $("resultSummary").innerHTML =
+    `<b>${escapeHtml(candidate.fullName)}</b> • ${escapeHtml(candidate.unitName)} • ${escapeHtml(candidate.positionName)}<br>
+     Số câu đúng: <b>${score.correct}/${score.total}</b> (${Math.round(score.correct / score.total * 100)}%)<br>
+     Thời gian làm bài: <b>${fmtTime(Math.min(durationSec, EXAM_DURATION_MIN * 60))}</b>`;
+}
 
-  function updateMain(title, sub) {
-    mainTitle.textContent = title;
-    mainSub.textContent = sub;
-  }
+function renderReview(){
+  const wrap = $("reviewList");
+  wrap.innerHTML = "";
+  if(!lastResult) return;
 
-  function shuffle(arr) {
-    const a = [...arr];
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-  }
-
-  async function loadQuestionsFromExcel() {
-    try {
-      const resp = await fetch(EXCEL_FILE + "?v=" + Date.now());
-      if (!resp.ok) throw new Error("Không tải được file " + EXCEL_FILE);
-      const arrayBuffer = await resp.arrayBuffer();
-      const workbook = XLSX.read(arrayBuffer, { type: "array" });
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-
-      const questions = rows.map((row, index) => {
-        const q = {
-          id: String(row.ID || row.Id || row.id || index + 1).trim(),
-          question: String(row.Question || row.question || row["Câu hỏi"] || "").trim(),
-          A: String(row.A || row.a || "").trim(),
-          B: String(row.B || row.b || "").trim(),
-          C: String(row.C || row.c || "").trim(),
-          D: String(row.D || row.d || "").trim(),
-          correct: String(row.Correct || row.correct || row["Đáp án đúng"] || "").trim().toUpperCase(),
-          explanation: String(row.Explanation || row.explanation || row["Giải thích"] || "").trim()
-        };
-        return q;
-      }).filter(q =>
-        q.question && q.A && q.B && q.C && q.D && ["A","B","C","D"].includes(q.correct)
-      );
-
-      if (questions.length < QUESTIONS_PER_EXAM) {
-        throw new Error("Ngân hàng đề chỉ có " + questions.length + " câu hợp lệ. Cần ít nhất " + QUESTIONS_PER_EXAM + " câu.");
-      }
-
-      state.allQuestions = questions;
-      setStatus("success", "Đã tải thành công <b>" + questions.length + "</b> câu hỏi từ file <b>" + EXCEL_FILE + "</b>.");
-    } catch (err) {
-      console.error(err);
-      setStatus("error",
-        "Không thể tải file <b>" + EXCEL_FILE + "</b>.<br>" +
-        "Kiểm tra lại:<br>" +
-        "1. File Excel có đúng tên <b>questions.xlsx</b> hay không.<br>" +
-        "2. File đặt cùng thư mục với HTML hay không.<br>" +
-        "3. Bạn đang mở web qua hosting/web server (ví dụ GitHub Pages), không mở bằng đường dẫn file cục bộ.<br><br>" +
-        "<b>Chi tiết:</b> " + err.message
-      );
-    }
-  }
-
-  function createExamSet() {
-    const picked = shuffle(state.allQuestions).slice(0, QUESTIONS_PER_EXAM);
-    state.examQuestions = picked.map((q, index) => {
-      const optionObjects = shuffle([
-        { original: "A", text: q.A },
-        { original: "B", text: q.B },
-        { original: "C", text: q.C },
-        { original: "D", text: q.D }
-      ]);
-
-      const displayLetters = ["A", "B", "C", "D"];
-      const mappedOptions = optionObjects.map((item, i) => ({
-        label: displayLetters[i],
-        text: item.text,
-        isCorrect: item.original === q.correct
-      }));
-
-      const correctDisplay = mappedOptions.find(o => o.isCorrect)?.label || "A";
-
-      return {
-        examIndex: index + 1,
-        id: q.id,
-        question: q.question,
-        options: mappedOptions,
-        correct: correctDisplay,
-        explanation: q.explanation
-      };
-    });
-  }
-
-  function startTimer() {
-    clearInterval(state.timerId);
-    state.timerId = setInterval(() => {
-      state.remainingSeconds--;
-      renderTimer();
-      if (state.remainingSeconds <= 0) {
-        clearInterval(state.timerId);
-        alert("Đã hết thời gian làm bài. Hệ thống sẽ tự động nộp bài.");
-        submitExam(true);
-      }
-    }, 1000);
-  }
-
-  function renderTimer() {
-    const mins = Math.floor(state.remainingSeconds / 60);
-    const secs = state.remainingSeconds % 60;
-    $("timeRemaining").textContent =
-      String(mins).padStart(2, "0") + ":" + String(secs).padStart(2, "0");
-  }
-
-  function renderProgress() {
-    const answered = Object.keys(state.answers).length;
-    $("answeredCounter").textContent = "Đã trả lời: " + answered + " / " + QUESTIONS_PER_EXAM;
-    $("questionCounter").textContent = "Câu " + (state.currentIndex + 1) + " / " + QUESTIONS_PER_EXAM;
-    $("progressBar").style.width = ((answered / QUESTIONS_PER_EXAM) * 100) + "%";
-  }
-
-  function renderQuestion() {
-    const q = state.examQuestions[state.currentIndex];
-    if (!q) return;
-
-    $("questionText").textContent = "Câu " + (state.currentIndex + 1) + ". " + q.question;
-    const optionsBox = $("optionsBox");
-    optionsBox.innerHTML = "";
-
-    q.options.forEach(option => {
-      const div = document.createElement("div");
-      div.className = "option" + (state.answers[q.examIndex] === option.label ? " selected" : "");
-      div.innerHTML = `
-        <div class="option-line">
-          <span class="letter">${option.label}</span>
-          <span>${escapeHtml(option.text)}</span>
+  lastResult.detail.forEach(d=>{
+    const card = document.createElement("div");
+    card.className = "card";
+    card.style.marginBottom = "12px";
+    card.innerHTML = `
+      <div style="display:flex; gap:10px; justify-content:space-between; flex-wrap:wrap">
+        <div><b>Câu ${d.idx}.</b> ${escapeHtml(d.question)}</div>
+        <div class="small" style="white-space:nowrap">
+          ${d.ok ? `<span style="color:var(--ok); font-weight:800">ĐÚNG</span>` : `<span style="color:var(--bad); font-weight:800">SAI</span>`}
         </div>
-      `;
-      div.addEventListener("click", () => {
-        state.answers[q.examIndex] = option.label;
-        renderQuestion();
-        renderProgress();
-      });
-      optionsBox.appendChild(div);
-    });
+      </div>
+      <div class="hr"></div>
+      <div class="small" style="line-height:1.6">
+        <div><b>A.</b> ${escapeHtml(d.A)}</div>
+        <div><b>B.</b> ${escapeHtml(d.B)}</div>
+        <div><b>C.</b> ${escapeHtml(d.C)}</div>
+        <div><b>D.</b> ${escapeHtml(d.D)}</div>
+      </div>
+      <div class="hr"></div>
+      <div class="small" style="line-height:1.6">
+        Bạn chọn: <b>${escapeHtml(d.pick || "—")}</b> • Đáp án đúng: <b>${escapeHtml(d.correct)}</b>
+        ${d.explanation ? `<div style="margin-top:8px"><b>Giải thích:</b> ${escapeHtml(d.explanation)}</div>` : ``}
+      </div>
+    `;
+    wrap.appendChild(card);
+  });
+}
 
-    $("btnPrev").disabled = state.currentIndex === 0;
-    $("btnNext").disabled = state.currentIndex === QUESTIONS_PER_EXAM - 1;
-    renderProgress();
+function renderAdminTable(rows){
+  if(!rows || !rows.length){
+    $("resultsWrap").innerHTML = "<div class='muted'>Chưa có dữ liệu.</div>";
+    return;
   }
 
-  function escapeHtml(value) {
-    return String(value)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+  const head = `
+    <table>
+      <thead>
+        <tr>
+          <th>Thời gian</th>
+          <th>Họ và tên</th>
+          <th>Đơn vị</th>
+          <th>Chức vụ</th>
+          <th>Đúng</th>
+          <th>Sai</th>
+          <th>%</th>
+          <th>Thời gian làm</th>
+          <th>Nguồn</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  const body = rows.map(r=>{
+    const t = r.time ? new Date(r.time).toLocaleString("vi-VN") : "";
+    const src = r.fromScript ? "Hệ thống" : "Cục bộ";
+    return `
+      <tr>
+        <td>${escapeHtml(t)}</td>
+        <td>${escapeHtml(r.fullName || "")}</td>
+        <td>${escapeHtml(r.unitName || "")}</td>
+        <td>${escapeHtml(r.positionName || "")}</td>
+        <td><b>${escapeHtml(r.correct ?? "")}</b>/${escapeHtml(r.total ?? "")}</td>
+        <td>${escapeHtml(r.wrong ?? "")}</td>
+        <td>${escapeHtml(r.percent ?? "")}%</td>
+        <td>${escapeHtml(r.durationSec ? fmtTime(Math.min(r.durationSec, 24 * 3600)) : "")}</td>
+        <td>${escapeHtml(src)}</td>
+      </tr>
+    `;
+  }).join("");
+
+  $("resultsWrap").innerHTML = head + body + "</tbody></table>";
+}
+
+function exportCSV(rows){
+  const header = ["time","fullName","unitName","positionName","total","correct","wrong","percent","durationSec","autoSubmit","source"];
+  const lines = [header.join(",")];
+
+  rows.forEach(r=>{
+    const src = r.fromScript ? "system" : "local";
+    const vals = [
+      r.time || "",
+      (r.fullName || "").replaceAll('"','""'),
+      (r.unitName || "").replaceAll('"','""'),
+      (r.positionName || "").replaceAll('"','""'),
+      r.total ?? "",
+      r.correct ?? "",
+      r.wrong ?? "",
+      r.percent ?? "",
+      r.durationSec ?? "",
+      r.autoSubmit ? "1" : "0",
+      src
+    ];
+    lines.push(vals.map(v => `"${String(v)}"`).join(","));
+  });
+
+  const blob = new Blob([lines.join("\n")], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "ket_qua_thi.csv";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+async function refreshResults(){
+  $("adminStatus").className = "status small";
+  $("adminStatus").textContent = "Đang tải dữ liệu…";
+
+  const local = loadLocalResults().map(r => ({...r, fromScript:false}));
+
+  let scriptRows = [];
+  if(SCRIPT_URL){
+    try{
+      const data = await fetchFromScript();
+      if(Array.isArray(data?.rows)){
+        scriptRows = data.rows.map(r => ({...r, fromScript:true}));
+      }
+    }catch(e){}
   }
 
-  function formatSeconds(seconds) {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return String(mins).padStart(2, "0") + ":" + String(secs).padStart(2, "0");
+  const merged = [...scriptRows, ...local].sort((a,b)=>{
+    const ta = new Date(a.time || 0).getTime();
+    const tb = new Date(b.time || 0).getTime();
+    return tb - ta;
+  });
+
+  window.__ADMIN_ROWS__ = merged;
+  renderAdminTable(merged);
+
+  $("adminStatus").className = "status ok small";
+  $("adminStatus").textContent = `Đã tải ${merged.length} bản ghi.`;
+}
+
+$("btnCandidate").onclick = ()=>{
+  hide(modeCard);
+  show(loginCard);
+};
+
+$("btnBackToMode1").onclick = ()=>{
+  hide(loginCard);
+  show(modeCard);
+};
+
+$("btnAdmin").onclick = ()=>{
+  hide(modeCard);
+  show(adminCard);
+};
+
+$("btnBackToMode2").onclick = ()=>{
+  hide(adminCard);
+  show(modeCard);
+};
+
+$("btnStart").onclick = ()=>{
+  const fn = $("fullName").value.trim();
+  const un = $("unitName").value.trim();
+  const pn = $("positionName").value.trim();
+
+  if(!fn || !un || !pn){
+    alert("Vui lòng nhập đầy đủ Họ và tên, Chức vụ và Đơn vị.");
+    return;
   }
 
-  async function sendResultToServer(payload) {
-    if (!SCRIPT_URL || SCRIPT_URL.includes("PASTE_YOUR")) {
-      return { ok: false, message: "Chưa cấu hình SCRIPT_URL." };
-    }
+  candidate.fullName = fn;
+  candidate.unitName = un;
+  candidate.positionName = pn;
 
-    try {
-      const resp = await fetch(SCRIPT_URL, {
-        method: "POST",
-        body: JSON.stringify(payload),
-        headers: { "Content-Type": "text/plain;charset=utf-8" }
-      });
+  buildExam();
+  hide(loginCard);
+  show(quizCard);
+  renderQuestion();
+  startTimer();
+};
 
-      const data = await resp.json().catch(() => ({ ok: true }));
-      return data && typeof data.ok !== "undefined" ? data : { ok: true };
-    } catch (err) {
-      console.error("Lỗi gửi kết quả:", err);
-      return { ok: false, message: err.message || "Không gửi được kết quả" };
-    }
-  }
-
-  function buildResultPayload(score, total, usedSeconds, detailRows) {
-    return {
-      action: "submit",
-      submittedAt: new Date().toISOString(),
-      fullName: state.candidate.fullName,
-      unit: state.candidate.unit,
-      score,
-      total,
-      percent: Number(((score / total) * 100).toFixed(2)),
-      usedSeconds,
-      usedTimeText: formatSeconds(usedSeconds),
-      questionCount: total,
-      answerDetails: detailRows
-    };
-  }
-
-  async function submitExam(autoSubmit = false) {
-    if (state.submitted) return;
-
-    if (!autoSubmit) {
-      const ok = confirm("Bạn chắc chắn muốn nộp bài?");
-      if (!ok) return;
-    }
-
-    clearInterval(state.timerId);
-    state.submitted = true;
-
-    const total = state.examQuestions.length;
-    let score = 0;
-    const detailRows = state.examQuestions.map((q, idx) => {
-      const selected = state.answers[q.examIndex] || "";
-      const correct = q.correct;
-      const isCorrect = selected === correct;
-      if (isCorrect) score++;
-      return {
-        stt: idx + 1,
-        questionId: q.id,
-        question: q.question,
-        selected,
-        correct,
-        result: isCorrect ? "Đúng" : "Sai"
-      };
-    });
-
-    const usedSeconds = (EXAM_TIME_MINUTES * 60) - state.remainingSeconds;
-    const payload = buildResultPayload(score, total, usedSeconds, detailRows);
-
-    $("resultName").textContent = state.candidate.fullName;
-    $("resultUnit").textContent = state.candidate.unit;
-    $("resultScore").textContent = score + "/" + total;
-    $("resultTime").textContent = formatSeconds(usedSeconds);
-
-    const detailBody = $("resultDetailBody");
-    detailBody.innerHTML = "";
-    detailRows.forEach(row => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${row.stt}</td>
-        <td>${escapeHtml(row.question)}</td>
-        <td>${escapeHtml(row.selected || "Chưa chọn")}</td>
-        <td>${escapeHtml(row.correct)}</td>
-        <td>${row.result}</td>
-      `;
-      detailBody.appendChild(tr);
-    });
-
-    const submitStatus = $("submitStatus");
-    submitStatus.className = "status info";
-    submitStatus.textContent = "Đang gửi kết quả lên hệ thống...";
-
-    const serverResult = await sendResultToServer(payload);
-    if (serverResult.ok) {
-      submitStatus.className = "status success";
-      submitStatus.textContent = "Nộp bài thành công. Kết quả đã được lưu để admin tổng hợp.";
-    } else {
-      submitStatus.className = "status warning";
-      submitStatus.textContent =
-        "Bài thi đã chấm xong trên trình duyệt nhưng chưa lưu tập trung: " +
-        (serverResult.message || "Lỗi chưa xác định") +
-        ". Hãy kiểm tra lại Apps Script hoặc quyền truy cập.";
-    }
-
-    updateMain("Kết quả bài thi", "Bài thi đã được chấm xong.");
-    showOnly("resultPanel");
-  }
-
-  function resetExamState() {
-    clearInterval(state.timerId);
-    state.examQuestions = [];
-    state.answers = {};
-    state.currentIndex = 0;
-    state.startTime = null;
-    state.remainingSeconds = EXAM_TIME_MINUTES * 60;
-    state.submitted = false;
-    renderTimer();
-  }
-
-  async function startExam() {
-    const fullName = $("fullName").value.trim();
-    const unit = $("unit").value.trim();
-
-    if (!fullName || !unit) {
-      alert("Vui lòng nhập đầy đủ Họ và tên, Đơn vị.");
-      return;
-    }
-    if (state.allQuestions.length < QUESTIONS_PER_EXAM) {
-      alert("Gói câu hỏi chưa sẵn sàng.");
-      return;
-    }
-
-    resetExamState();
-    state.candidate = { fullName, unit };
-    createExamSet();
-    state.startTime = new Date();
-
-    $("candidateNameView").textContent = fullName;
-    $("candidateUnitView").textContent = unit;
-
-    updateMain("Đang làm bài thi", "Mỗi thí sinh làm 20 câu trong 20 phút. Hết giờ hệ thống tự nộp.");
-    showOnly("examPanel");
+$("btnPrev").onclick = ()=>{
+  if(curIdx > 0){
+    curIdx--;
     renderQuestion();
-    renderTimer();
-    startTimer();
+  }
+};
+
+$("btnNext").onclick = ()=>{
+  if(curIdx < EXAM_QUESTION_COUNT - 1){
+    curIdx++;
+    renderQuestion();
+  }
+};
+
+$("btnSubmit").onclick = async ()=>{
+  const unanswered = [];
+  for(let i=0;i<EXAM_QUESTION_COUNT;i++){
+    if(!answers[i]) unanswered.push(i + 1);
   }
 
-  async function fetchAdminResults() {
-    if (!SCRIPT_URL || SCRIPT_URL.includes("PASTE_YOUR")) {
-      alert("Bạn chưa cấu hình SCRIPT_URL trong file HTML.");
-      return;
-    }
-
-    const url = SCRIPT_URL + (SCRIPT_URL.includes("?") ? "&" : "?") + "action=list&_ts=" + Date.now();
-
-    try {
-      const resp = await fetch(url);
-      const data = await resp.json();
-      const rows = Array.isArray(data.rows) ? data.rows : [];
-      state.adminRows = rows;
-      renderAdminRows(rows);
-    } catch (err) {
-      console.error(err);
-      alert("Không tải được kết quả tổng hợp. Kiểm tra lại Apps Script hoặc quyền triển khai Web App.");
-    }
+  if(unanswered.length){
+    const ok = confirm(`Bạn còn ${unanswered.length} câu chưa chọn đáp án. Vẫn nộp bài?`);
+    if(!ok) return;
   }
 
-  function renderAdminRows(rows) {
-    const body = $("adminResultBody");
-    body.innerHTML = "";
+  await submitExam(false);
+};
 
-    if (!rows.length) {
-      body.innerHTML = `<tr><td colspan="7" class="muted">Chưa có dữ liệu bài thi.</td></tr>`;
-      $("statTotal").textContent = "0";
-      $("statAverage").textContent = "0";
-      $("statMax").textContent = "0";
-      $("statMin").textContent = "0";
-      return;
-    }
+$("btnExit").onclick = ()=>{
+  const ok = confirm("Thoát sẽ kết thúc lượt thi hiện tại. Bạn chắc chắn?");
+  if(!ok) return;
 
-    const sorted = [...rows].sort((a,b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0));
-
-    let totalScore = 0;
-    let max = -Infinity;
-    let min = Infinity;
-
-    sorted.forEach((row, idx) => {
-      const score = Number(row.score || 0);
-      const total = Number(row.total || QUESTIONS_PER_EXAM) || QUESTIONS_PER_EXAM;
-      const percent = total ? ((score / total) * 100) : 0;
-
-      totalScore += score;
-      max = Math.max(max, score);
-      min = Math.min(min, score);
-
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${idx + 1}</td>
-        <td>${escapeHtml(formatDateTime(row.submittedAt))}</td>
-        <td>${escapeHtml(row.fullName || "")}</td>
-        <td>${escapeHtml(row.unit || "")}</td>
-        <td>${score}/${total}</td>
-        <td>${percent.toFixed(2)}%</td>
-        <td>${escapeHtml(row.usedTimeText || formatSeconds(Number(row.usedSeconds || 0)))}</td>
-      `;
-      body.appendChild(tr);
-    });
-
-    $("statTotal").textContent = String(sorted.length);
-    $("statAverage").textContent = (totalScore / sorted.length).toFixed(2);
-    $("statMax").textContent = String(max);
-    $("statMin").textContent = String(min);
+  if(timerId){
+    clearInterval(timerId);
+    timerId = null;
   }
 
-  function formatDateTime(isoString) {
-    if (!isoString) return "";
-    const d = new Date(isoString);
-    if (isNaN(d)) return isoString;
-    return d.toLocaleString("vi-VN");
+  hide(quizCard);
+  show(modeCard);
+};
+
+$("btnReview").onclick = ()=>{
+  hide(resultCard);
+  show(reviewCard);
+  renderReview();
+};
+
+$("btnBackFromReview").onclick = ()=>{
+  hide(reviewCard);
+  show(resultCard);
+};
+
+$("btnFinish").onclick = ()=>{
+  hide(resultCard);
+  show(modeCard);
+};
+
+$("btnAdminLogin").onclick = async ()=>{
+  const pass = $("adminPass").value;
+
+  if(pass !== ADMIN_PASSWORD){
+    $("adminStatus").className = "status bad small";
+    $("adminStatus").textContent = "Sai mật khẩu.";
+    return;
   }
 
-  function exportAdminCsv() {
-    if (!state.adminRows.length) {
-      alert("Chưa có dữ liệu để xuất.");
-      return;
-    }
-    const headers = ["STT","Thời gian nộp","Họ và tên","Đơn vị","Điểm","Tổng câu","Tỷ lệ","Thời gian làm bài"];
-    const lines = [headers.join(",")];
+  $("adminStatus").className = "status ok small";
+  $("adminStatus").textContent = "Đăng nhập thành công.";
+  $("btnRefreshResults").disabled = false;
+  $("btnExportCSV").disabled = false;
 
-    state.adminRows.forEach((row, idx) => {
-      const score = Number(row.score || 0);
-      const total = Number(row.total || QUESTIONS_PER_EXAM);
-      const percent = total ? ((score / total) * 100).toFixed(2) + "%" : "0%";
-      const values = [
-        idx + 1,
-        csvSafe(formatDateTime(row.submittedAt)),
-        csvSafe(row.fullName || ""),
-        csvSafe(row.unit || ""),
-        score,
-        total,
-        percent,
-        csvSafe(row.usedTimeText || formatSeconds(Number(row.usedSeconds || 0)))
-      ];
-      lines.push(values.join(","));
-    });
+  await refreshResults();
+};
 
-    const blob = new Blob(["\ufeff" + lines.join("\n")], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "tong_hop_ket_qua_thi.csv";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-  }
+$("btnRefreshResults").onclick = refreshResults;
 
-  function csvSafe(value) {
-    const v = String(value).replaceAll('"', '""');
-    return '"' + v + '"';
-  }
+$("btnExportCSV").onclick = ()=>{
+  const rows = window.__ADMIN_ROWS__ || [];
+  exportCSV(rows);
+};
 
-  // Event bindings
-  $("btnCandidateMode").addEventListener("click", () => {
-    $("roleList").classList.add("hidden");
-    $("candidateForm").classList.remove("hidden");
-    updateMain("Thông tin thí sinh", "Nhập thông tin trước khi bắt đầu làm bài.");
-    showOnly("welcomePanel");
-  });
+$("btnClearLocal").onclick = ()=>{
+  const ok = confirm("Xóa toàn bộ dữ liệu kết quả cục bộ trên thiết bị này?");
+  if(!ok) return;
 
-  $("btnAdminMode").addEventListener("click", () => {
-    $("roleList").classList.add("hidden");
-    $("adminLogin").classList.remove("hidden");
-    updateMain("Đăng nhập admin", "Nhập mật khẩu để xem kết quả tổng hợp.");
-    showOnly("welcomePanel");
-  });
+  localStorage.removeItem(localKey());
+  $("adminStatus").className = "status ok small";
+  $("adminStatus").textContent = "Đã xóa dữ liệu cục bộ.";
+  $("resultsWrap").innerHTML = "<div class='muted'>Chưa có dữ liệu.</div>";
+};
 
-  $("btnBackFromCandidate").addEventListener("click", () => {
-    resetSidePanels();
-    updateMain("Sẵn sàng tổ chức thi", "Hệ thống đang chờ lựa chọn chế độ làm việc.");
-    showOnly("welcomePanel");
-  });
-
-  $("btnBackFromAdmin").addEventListener("click", () => {
-    resetSidePanels();
-    updateMain("Sẵn sàng tổ chức thi", "Hệ thống đang chờ lựa chọn chế độ làm việc.");
-    showOnly("welcomePanel");
-  });
-
-  $("btnStartExam").addEventListener("click", startExam);
-
-  $("btnPrev").addEventListener("click", () => {
-    if (state.currentIndex > 0) {
-      state.currentIndex--;
-      renderQuestion();
-    }
-  });
-
-  $("btnNext").addEventListener("click", () => {
-    if (state.currentIndex < QUESTIONS_PER_EXAM - 1) {
-      state.currentIndex++;
-      renderQuestion();
-    }
-  });
-
-  $("btnSubmitExam").addEventListener("click", () => submitExam(false));
-
-  $("btnNewAttempt").addEventListener("click", () => {
-    $("fullName").value = "";
-    $("unit").value = "";
-    resetSidePanels();
-    updateMain("Thông tin thí sinh", "Nhập thông tin trước khi bắt đầu làm bài.");
-    showOnly("welcomePanel");
-    $("roleList").classList.add("hidden");
-    $("candidateForm").classList.remove("hidden");
-  });
-
-  $("btnBackHomeFromResult").addEventListener("click", () => {
-    $("fullName").value = "";
-    $("unit").value = "";
-    resetSidePanels();
-    updateMain("Sẵn sàng tổ chức thi", "Hệ thống đang chờ lựa chọn chế độ làm việc.");
-    showOnly("welcomePanel");
-  });
-
-  $("btnAdminLogin").addEventListener("click", async () => {
-    const pass = $("adminPassword").value;
-    if (pass !== ADMIN_PASSWORD) {
-      alert("Sai mật khẩu admin.");
-      return;
-    }
-    updateMain("Bảng tổng hợp kết quả", "Đang tải kết quả bài thi của thí sinh...");
-    showOnly("adminPanel");
-    await fetchAdminResults();
-  });
-
-  $("btnRefreshResults").addEventListener("click", fetchAdminResults);
-  $("btnExportCsv").addEventListener("click", exportAdminCsv);
-
-  $("btnLogoutAdmin").addEventListener("click", () => {
-    $("adminPassword").value = "";
-    resetSidePanels();
-    updateMain("Sẵn sàng tổ chức thi", "Hệ thống đang chờ lựa chọn chế độ làm việc.");
-    showOnly("welcomePanel");
-  });
-
-  // Init
-  renderTimer();
-  loadQuestionsFromExcel();
-})();
+loadQuestions();
 </script>
 </body>
 </html>
