@@ -666,13 +666,23 @@ function escapeHtml(s){
     .replaceAll("'","&#039;");
 }
 
+function resolveAssetUrl(fileName){
+  // Luôn lấy file theo đúng thư mục đang chứa index.html (hữu ích khi chạy GitHub Pages dạng /repo/ hoặc /repo/index.html)
+  const cleanHref = window.location.href.split("#")[0].split("?")[0];
+  const dir = cleanHref.endsWith("/") ? cleanHref : cleanHref.substring(0, cleanHref.lastIndexOf("/") + 1);
+  return new URL(fileName, dir).href;
+}
+
+
 async function loadQuestions(){
   try{
     setNet("Đang tải");
     setStatus("", "Đang tải ngân hàng câu hỏi…");
 
-    const res = await fetch(QUESTIONS_FILE, { cache:"no-store" });
-    if(!res.ok) throw new Error("Không thể tải file " + QUESTIONS_FILE);
+    const url = resolveAssetUrl(QUESTIONS_FILE);
+
+    const res = await fetch(url, { cache:"no-store" });
+    if(!res.ok) throw new Error(`Không thể tải file: ${url} (HTTP ${res.status})`);
 
     const ab = await res.arrayBuffer();
     const wb = XLSX.read(ab, { type:"array" });
@@ -705,8 +715,14 @@ async function loadQuestions(){
     console.error(err);
     bankInfo.textContent = "Ngân hàng câu hỏi gồm 0 câu";
     setNet("Lỗi tải câu hỏi");
-    setStatus("bad", "Không thể tải ngân hàng câu hỏi. Hãy kiểm tra file questions.xlsx và bảo đảm đang chạy qua hosting/web server.");
-  }
+    setStatus("bad", "Không thể tải ngân hàng câu hỏi.
+" +
+      "• Hãy đảm bảo bạn đang mở bằng GitHub Pages (Settings → Pages), không mở file trên github.com
+" +
+      "• Kiểm tra file questions.xlsx có nằm cùng thư mục với index.html trên Pages
+" +
+      "• Thử mở trực tiếp file câu hỏi trên trình duyệt để kiểm tra 404
+");}
 }
 
 function buildExam(){
